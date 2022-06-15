@@ -27,7 +27,11 @@ dateString = "Today is:\n24-11-2020\n24/11/2020\n24/11/20\n11/24/2020\n24 Nov 20
 
 months = {'january':1, 'february':2, 'march':3, 'april':4, 'may':5, 'june':6, 'july':7, 'august':8, 'september':9,
           'october':10, 'november':11, 'december':12}
-weekdays = {0:'monday', 1:'tuesday', 2:'wednesday', 3:'thursday', 4:'friday', 5:'saturday', 6:'sunday'}
+weekdays = {'monday':0, 'tuesday':1, 'wednesday':2, 'thursday':3, 'friday':4, 'saturday':5, 'sunday':6}
+days = {'first':1, 'second':2, 'third':3, 'fourth':4, 'fifth':5, 'sixth':6, 'seventh':7, 'eighth':8, 'ninth':9, 'tenth':10, 'eleventh':11,
+        'twelfth':12, 'thirteenth':13, 'fourteenth':14, 'fifteenth':15, 'sixteenth':16, 'seventeenth':17, 'eighteenth':18, 'ninteenth':19,
+        'twentieth':20, 'twenty first':21, 'twenty second':22, 'twenty third':23, 'twenty fourth':24, 'twenty fifth': 25, 'twenty sixth':26,
+        'twenty seventh':27, 'twenty eighth':28, 'twenty ninth':29, 'thirtieth':30, 'thirty first':31}
 
 def extractionUsingRe(string: str):
     print(Fore.GREEN + Style.BRIGHT + "__USING RE__")
@@ -39,7 +43,7 @@ def extractionUsingRe(string: str):
 def filteringUselessWords(string:str) -> str:
     stringTokens = word_tokenize(string)
     stop_words = set(stopwords.words("english"))
-    print("Stop Words: ", stop_words)
+    # print("Stop Words: ", stop_words)
     stop_words.remove('after')
     stop_words.remove('before')
     stop_words.add('see')
@@ -48,21 +52,30 @@ def filteringUselessWords(string:str) -> str:
 
     filteredList = [word for word in stringTokens if word.casefold() not in stop_words]
 
-    posTaggedElements = nltk.pos_tag(filteredList)
-
     wordsToReturn = []
-    for word, tag in posTaggedElements:
+    for word, tag in nltk.pos_tag(filteredList):
         if tag == "NN" or tag == "NNP" or tag == "IN" or tag == "CD" or tag == "JJ" or tag == "RB":
             wordsToReturn.append(word)
 
-    # print(posTaggedElements)
+    posTaggedElements = nltk.pos_tag(wordsToReturn)
+    print(posTaggedElements)
     # print(filteredList)
     print("Filtering Results: ", wordsToReturn)
 
-    return wordsToReturn
+    return wordsToReturn, list(posTaggedElements)
+
+def fixingCardinalStrings(cardinalString: str):
+    if not cardinalString[-1].isdigit() and cardinalString[0].isdigit():
+        fixedString = ''
+        for c in cardinalString:
+            if c.isdigit():
+                fixedString+=c
+        return int(fixedString)
+    else:
+        return cardinalString
 
 def extractionUsingArrowAndNltk(string: str):
-    filteredWords = filteringUselessWords(string)
+    filteredWords, posTaggedElements = filteringUselessWords(string)
 
     # MANIPULATING DATES
     currentDate = arrow.now()
@@ -71,31 +84,119 @@ def extractionUsingArrowAndNltk(string: str):
         print(filteredWords)
         if filteredWords[0].lower() == 'tomorrow':
             resDate = currentDate.shift(days = -1).date()
+            return resDate
         elif filteredWords[0].lower() == 'yesterday':
             resDate = currentDate.shift(days = 1).date()
+            return resDate
         elif filteredWords[0].lower() in months:
             if currentDate.month > months[filteredWords[0].lower()]:
                 resDate = currentDate.shift(months = -(currentDate.month - months[filteredWords[0].lower()])).date()
+                return resDate
             elif months[filteredWords[0].lower()] > currentDate.month:
                 resDate = currentDate.shift(months = (months[filteredWords[0].lower()] - currentDate.month)).date()
+                return resDate
             # print(months[filteredWords[0].lower()])
 
     elif len(filteredWords) == 2:
         print(filteredWords)
+        if filteredWords[0].lower() == 'last':
+            # last week
+            # print(currentDate.weekday())
+            if filteredWords[-1].lower() == 'week':
+                resDate = currentDate.shift(days = -7).date()
+                return resDate
+            # last month
+            if filteredWords[-1].lower() == 'month':
+                if currentDate.month == 1:
+                    resDate = currentDate.shift(year = -1).date()
+                    resDate = currentDate.replace(months = 12).date()
+                    return resDate
+                else:
+                    resDate = currentDate.shift(months = -1).date()
+                    return resDate
+            # last year
+            if filteredWords.lower() == 'year':
+                resDate = currentDate.shift(years = -1).date()
+                return resDate
+            # last *weekday*
+            #TODO: Test this crap (this seems a bit shady)
+            if filteredWords.lower() in weekdays:
+                resDate = currentDate.replace(weekday = -(weekdays[filteredWords[-1].lower()])).date()
+                return resDate
+        elif filteredWords[0].lower() == 'next':
+            # next week
+            if filteredWords[-1].lower() == 'week':
+                resDate = currentDate.shift(days = 7).date()
+                return resDate
+            # next month
+            if filteredWords[-1].lower() =='month':
+                resDate = currentDate.shift(months = 1).date()
+                return resDate
+            # next year
+            if filteredWords[-1].lower() == 'year':
+                resDate = currentDate.shift(years = 1).date()
+                return resDate
+            # next *weekday*
+            if filteredWords[-1].lower() in weekdays:
+                resDate = currentDate.replace(weekday = weekdays[filteredWords[-1].lower()])
+                return resDate
+
+        elif filteredWords[-1].lower() == 'ago':
+            # day ago (no one really says this but better safe than sorry)
+            if filteredWords[0].lower() == 'day':
+                resDate = currentDate.shift(days = -1)
+                return resDate
+            # week ago
+            if filteredWords[0].lower() == 'week':
+                resDate = currentDate.shift(days = -7)
+                print(resDate)
+            # month ago
+            if filteredWords[0].lower() == 'month':
+                if currentDate.month == 1:
+                    resDate = currentDate.shift(years = -1, months = -1)
+                    return resDate
+                else:
+                    resDate = currentDate.shift(months = -1)
+                    return resDate
+            # year ago
+            if filteredWords[0].lower() == 'year':
+                resDate = currentDate.shift(years= -1)
+                return resDate
+
+        elif filteredWords[-1].lower() in months:
+            fixedString = fixingCardinalStrings(posTaggedElements[0][0])
+            if type(fixedString) == int:
+                resDate = currentDate.replace(days = fixedString, months = months[filteredWords[-1].lower()]).date()
+            else:
+                if fixedString.lower() in days:
+                    resDate = currentDate.replace(days = days[fixedString.lower], months = months[filteredWords[-1].lower()]).date()
+                else:
+                    print("Something's wrong I can feel it!")
+
+
+        elif filteredWords[0].lower() in months:
+            pass
+
     elif len(filteredWords) == 3:
         print(filteredWords)
-    else:
-        print("Something is wrong, you are an absolute failure and a waste of life")
+        # day after tomorrow
+        # day before yesterday
+        # *nums* days ago
+        # *nums* months ago
+        # *nums* years ago
 
-extractionUsingArrowAndNltk(texts[9])
+    else:
+        print("Something is wrong, you are an absolute failure and a waste of life. Here's a shovel, go dig your own grave.")
+
+extractionUsingArrowAndNltk(texts[2])
 # filteringUselessWords(texts[9])
 
-# WRITTEN STRINGS
-# yesterday ---> days -= 1
-# tomorrow ---> days += 1
-# last __
-# next __
-# *num* __ ago
-# __ ago
-# day after tomorrow ---> days += 2
-# day before yesterday ---> days -= 2
+# __STRING PATTERNS__
+#   yesterday ---> days -= 1
+#   tomorrow ---> days += 1
+#   last __
+#   next __
+#   *num* __ ago
+#   __ ago
+#   day after tomorrow ---> days += 2
+#   day before yesterday ---> days -= 2
