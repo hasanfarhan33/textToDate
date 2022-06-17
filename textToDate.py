@@ -14,6 +14,8 @@ from nltk.stem.snowball import SnowballStemmer
 from colorama import Fore, Back, init, Style
 init(autoreset=True)
 
+from word2number import w2n
+
 texts = ["I will see you tomorrow.", "Day after tomorrow", "On 3rd January.", "First of December.", "We met last Sunday.",
          "Yesterday was a good day", "See you next Monday", "12th November, 1963", "a decade ago", "I bought it last week",
          "I bought this in March"]
@@ -28,7 +30,7 @@ dateString = "Today is:\n24-11-2020\n24/11/2020\n24/11/20\n11/24/2020\n24 Nov 20
 months = {'january':1, 'february':2, 'march':3, 'april':4, 'may':5, 'june':6, 'july':7, 'august':8, 'september':9,
           'october':10, 'november':11, 'december':12}
 weekdays = {'monday':0, 'tuesday':1, 'wednesday':2, 'thursday':3, 'friday':4, 'saturday':5, 'sunday':6}
-days = {'first':1, 'second':2, 'third':3, 'fourth':4, 'fifth':5, 'sixth':6, 'seventh':7, 'eighth':8, 'ninth':9, 'tenth':10, 'eleventh':11,
+daysTh = {'first':1, 'second':2, 'third':3, 'fourth':4, 'fifth':5, 'sixth':6, 'seventh':7, 'eighth':8, 'ninth':9, 'tenth':10, 'eleventh':11,
         'twelfth':12, 'thirteenth':13, 'fourteenth':14, 'fifteenth':15, 'sixteenth':16, 'seventeenth':17, 'eighteenth':18, 'ninteenth':19,
         'twentieth':20, 'twenty first':21, 'twenty second':22, 'twenty third':23, 'twenty fourth':24, 'twenty fifth': 25, 'twenty sixth':26,
         'twenty seventh':27, 'twenty eighth':28, 'twenty ninth':29, 'thirtieth':30, 'thirty first':31}
@@ -163,32 +165,64 @@ def extractionUsingArrowAndNltk(string: str):
                 resDate = currentDate.shift(years= -1)
                 return resDate
 
+        # [3rd, January] [Third, January]
         elif filteredWords[-1].lower() in months:
             fixedString = fixingCardinalStrings(posTaggedElements[0][0])
+            # [3rd, January]
             if type(fixedString) == int:
                 resDate = currentDate.replace(days = fixedString, months = months[filteredWords[-1].lower()]).date()
+            # [Third, January]
             else:
-                if fixedString.lower() in days:
-                    resDate = currentDate.replace(days = days[fixedString.lower], months = months[filteredWords[-1].lower()]).date()
+                if fixedString.lower() in daysTh:
+                    resDate = currentDate.replace(days = daysTh[fixedString.lower()], months = months[filteredWords[-1].lower()]).date()
                 else:
                     print("Something's wrong I can feel it!")
 
-
+        # [November, 5th] [November, Fifth]
         elif filteredWords[0].lower() in months:
-            pass
+            fixedString = fixingCardinalStrings(posTaggedElements[0][-1])
+
+            if type(fixedString) == int:
+                resDate = currentDate.replace(days = fixedString, months = months[filteredWords[0].lower()]).date()
+            else:
+                if fixedString.lower() in daysTh:
+                    resDate = currentDate.replace(days = daysTh[fixedString.lower()], months = months[filteredWords[0].lower()]).date()
+                else:
+                    print("Well this feeling I've got. Like something is about to happen. But I don't know what.")
+
+        # Day after tomorrow
+        elif filteredWords[-1].lower() == 'tomorrow' and filteredWords[0].lower() == 'after':
+            resDate = currentDate.shift(days = 2)
+        # Day before yesterday
+        elif filteredWords[-1].lower() == 'yesterday' and filteredWords[0].lower() == 'before':
+            resDate = currentDate.shift(days = -2)
+
 
     elif len(filteredWords) == 3:
         print(filteredWords)
-        # day after tomorrow
-        # day before yesterday
         # *nums* days ago
+        if filteredWords[1].lower() == 'days' and filteredWords[-1].lower() == 'ago':
+            if filteredWords[0].isdigit():
+                resDate = currentDate.shift(days=-int(filteredWords[0])).date()
+            else:
+                resDate = currentDate.shift(days = -int(w2n.word_to_num(filteredWords[0].lower()))).date()
         # *nums* months ago
+        elif filteredWords[1].lower() == 'months' and filteredWords[-1].lower() == 'ago':
+            if filteredWords[0].isdigit():
+                resDate = currentDate.shift(months=-int(filteredWords[0])).date()
+            else:
+                resDate = currentDate.shift(months= -int(w2n.word_to_num(filteredWords[0].lower()))).date()
         # *nums* years ago
+        elif filteredWords[1].lower() == 'years' and filteredWords[-1].lower() == 'ago':
+            if filteredWords[0].isdigit():
+                resDate = currentDate.shift(years=-int(filteredWords[0])).date()
+            else:
+                resDate = currentDate.shift(years = -int(w2n.word_to_num(filteredWords[0].lower()))).date()
 
     else:
         print("Something is wrong, you are an absolute failure and a waste of life. Here's a shovel, go dig your own grave.")
 
-extractionUsingArrowAndNltk(texts[2])
+extractionUsingArrowAndNltk(texts[1])
 # filteringUselessWords(texts[9])
 
 # __STRING PATTERNS__
