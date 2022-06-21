@@ -23,7 +23,7 @@ texts = ["I will see you tomorrow.", "Day after tomorrow", "On 3rd January.", "F
          "Yesterday was a good day", "See you next Monday", "12th November, 1963", "a decade ago", "I bought it last week",
          "I bought this in March"]
 
-testSentence = "I will buy this product on coming 3"
+testSentence = "tomorrow"
 
 dateString = "Today is:\n24-11-2020\n24/11/2020\n24/11/20\n11/24/2020\n24 Nov 2020" \
              "\n24 November 2020\nNov 24, 2020\nNovember 24, 2020\n5-11-2020\n5/11/2020\n5/11/20\n11/5/2020" \
@@ -103,19 +103,19 @@ def extractionUsingArrowAndNltk(string: str):
     if len(filteredWords) == 1:
         # print(filteredWords)
         if filteredWords[0].lower() == 'tomorrow':
-            resDate = currentDate.shift(days = 1).date()
+            resDate = currentDate.shift(days = 1).format('DD-MM-YYYY')
             return resDate
         elif filteredWords[0].lower() == 'yesterday':
-            resDate = currentDate.shift(days = -1).date()
+            resDate = currentDate.shift(days = -1).format('DD-MM-YYYY')
             return resDate
         elif filteredWords[0].lower() == 'today':
-            return currentDate.date()
+            return currentDate.format('DD-MM-YYYY')
         elif filteredWords[0].lower() in months:
             if currentDate.month > months[filteredWords[0].lower()]:
-                resDate = currentDate.replace(month = months[filteredWords[0].lower()]).date()
+                resDate = currentDate.replace(month = months[filteredWords[0].lower()]).format('DD-MM-YYYY')
                 return resDate
             elif months[filteredWords[0].lower()] > currentDate.month:
-                resDate = currentDate.shift(months = (months[filteredWords[0].lower()] - currentDate.month)).date()
+                resDate = currentDate.shift(months = (months[filteredWords[0].lower()] - currentDate.month)).format('DD-MM-YYYY')
                 return resDate
             # print(months[filteredWords[0].lower()])
 
@@ -125,104 +125,113 @@ def extractionUsingArrowAndNltk(string: str):
             # last week
             # print(currentDate.weekday())
             if filteredWords[-1].lower() == 'week':
-                resDate = currentDate.shift(days = -7).date()
+                resDate = currentDate.shift(days = -7).format('DD-MM-YYYY')
                 return resDate
             # last month
             if filteredWords[-1].lower() == 'month':
                 if currentDate.month == 1:
-                    resDate = currentDate.shift(year = -1).date()
-                    resDate = currentDate.replace(months = 12).date()
+                    resDate = currentDate.shift(year = -1).format('DD-MM-YYYY')
+                    resDate = currentDate.replace(months = 12).format('DD-MM-YYYY')
                     return resDate
                 else:
-                    resDate = currentDate.shift(months = -1).date()
+                    resDate = currentDate.shift(months = -1).format('DD-MM-YYYY')
                     return resDate
             # last year
             if filteredWords[-1].lower() == 'year':
-                resDate = currentDate.shift(years = -1).date()
+                resDate = currentDate.shift(years = -1).format('DD-MM-YYYY')
                 return resDate
             # last *weekday*
-            #TODO: Test this crap (this seems a bit shady)
             if filteredWords[-1].lower() in weekdays:
-                resDate = currentDate.shift(weeks = -1, weekday = weekdays[filteredWords[-1].lower()]).date()
+                resDate = currentDate.shift(weeks = -1, weekday = weekdays[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
         elif filteredWords[0].lower() == 'next':
             # next week
             if filteredWords[-1].lower() == 'week':
-                resDate = currentDate.shift(days = 7).date()
+                resDate = currentDate.shift(days = 7).format('DD-MM-YYYY')
                 return resDate
             # next month
             if filteredWords[-1].lower() =='month':
-                resDate = currentDate.shift(months = 1).date()
+                resDate = currentDate.shift(months = 1).format('DD-MM-YYYY')
                 return resDate
             # next year
             if filteredWords[-1].lower() == 'year':
-                resDate = currentDate.shift(years = 1).date()
+                resDate = currentDate.shift(years = 1).format('DD-MM-YYYY')
                 return resDate
             # next *weekday*
             if filteredWords[-1].lower() in weekdays:
-                resDate = currentDate.shift(weeks = 1, weekday = weekdays[filteredWords[-1].lower()]).date()
+                resDate = currentDate.shift(weeks = 1, weekday = weekdays[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
-        # TODO: Test this
         elif filteredWords[0].lower() == 'coming':
             if filteredWords[-1].lower() in weekdays:
-                resDate = currentDate.shift(weeks=1, weekday = weekdays[filteredWords[-1].lower()]).date()
+                resDate = currentDate.shift(weekday = weekdays[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
             elif filteredWords[-1].lower() in cardinalNums:
                 if currentDate.day < cardinalNums[filteredWords[-1].lower()]:
-                    resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()]).date()
+                    resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                     return resDate
-                else:
+                elif currentDate.day > cardinalNums[filteredWords[-1].lower()]:
                     resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()])
-                    resDate = resDate.shift(months = 1).date()
+                    resDate = resDate.shift(months = 1).format('DD-MM-YYYY')
+                    return resDate
+            elif filteredWords[-1].lower() in daysTh:
+                if currentDate.day < daysTh[filteredWords[-1].lower()]:
+                    resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()]).format('DD-MM-YYYY')
+                    return resDate
+                elif currentDate.day > daysTh[filteredWords[-1].lower()]:
+                    resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()])
+                    resDate = resDate.shift(months = 1).format('DD-MM-YYYY')
                     return resDate
             elif filteredWords[-1].lower() in months:
-                resDate = currentDate.replace(day = 1, month = months[filteredWords[-1].lower()]).date()
-                return resDate
+                if currentDate.month < months[filteredWords[-1].lower()]:
+                    resDate = currentDate.replace(day = 1, month = months[filteredWords[-1].lower()]).format('DD-MM-YYYY')
+                    return resDate
+                if currentDate.month > months[filteredWords[-1].lower()]:
+                    resDate = currentDate.shift(years = 1)
+                    resDate = resDate.replace(day = 1, month = months[filteredWord[-1].lower()]).format('DD-MM-YYYY')
+                    return resDate
 
         elif filteredWords[-1].lower() == 'ago':
             # week ago
             if filteredWords[0].lower() == 'week':
-                resDate = currentDate.shift(days = -7).date()
+                resDate = currentDate.shift(days = -7).format('DD-MM-YYYY')
                 return resDate
             # month ago
             if filteredWords[0].lower() == 'month':
                 if currentDate.month == 1:
-                    resDate = currentDate.shift(years = -1, months = -1).date()
+                    resDate = currentDate.shift(years = -1, months = -1).format('DD-MM-YYYY')
                     return resDate
                 else:
-                    resDate = currentDate.shift(months = -1).date()
+                    resDate = currentDate.shift(months = -1).format('DD-MM-YYYY')
                     return resDate
             # year ago
             if filteredWords[0].lower() == 'year':
-                resDate = currentDate.shift(years= -1).date()
+                resDate = currentDate.shift(years= -1).format('DD-MM-YYYY')
                 return resDate
 
         # [3rd, January] [Third, January]
         elif filteredWords[-1].lower() in months:
-            #TODO: Test this
             if filteredWords[0].lower() in cardinalNums:
-                resDate = currentDate.replace(day = cardinalNums[filteredWords[0].lower()], month = months[filteredWords[-1].lower()])
+                resDate = currentDate.replace(day = cardinalNums[filteredWords[0].lower()], month = months[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
             else:
-                resDate = currentDate.replace(day = daysTh[filteredWords[0].lower()], month = months[filteredWords[-1].lower()])
+                resDate = currentDate.replace(day = daysTh[filteredWords[0].lower()], month = months[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
 
         # [November, 5th] [November, Fifth]
-        #TODO: Fix this
         elif filteredWords[0].lower() in months:
             if filteredWords[-1].lower() in cardinalNums:
-                resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()], month = months[filteredWords[0].lower()]).date()
+                resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()], month = months[filteredWords[0].lower()]).format('DD-MM-YYYY')
                 return resDate
             else:
-                resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()], month = months[filteredWords[0].lower()]).date()
+                resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()], month = months[filteredWords[0].lower()]).format('DD-MM-YYYY')
                 return resDate
         # Day after tomorrow
         elif filteredWords[-1].lower() == 'tomorrow' and filteredWords[0].lower() == 'after':
-            resDate = currentDate.shift(days = 2).date()
+            resDate = currentDate.shift(days = 2).format('DD-MM-YYYY')
             return resDate
         # Day before yesterday
         elif filteredWords[-1].lower() == 'yesterday' and filteredWords[0].lower() == 'before':
-            resDate = currentDate.shift(days = -2).date()
+            resDate = currentDate.shift(days = -2).format('DD-MM-YYYY')
             return resDate
 
 
@@ -231,26 +240,26 @@ def extractionUsingArrowAndNltk(string: str):
         # *nums* days ago
         if filteredWords[1].lower() == 'days' and filteredWords[-1].lower() == 'ago':
             if filteredWords[0].isdigit():
-                resDate = currentDate.shift(days=-int(filteredWords[0])).date()
+                resDate = currentDate.shift(days=-int(filteredWords[0])).format('DD-MM-YYYY')
                 return resDate
             else:
-                resDate = currentDate.shift(days = -int(w2n.word_to_num(filteredWords[0].lower()))).date()
+                resDate = currentDate.shift(days = -int(w2n.word_to_num(filteredWords[0].lower()))).format('DD-MM-YYYY')
                 return resDate
         # *nums* months ago
         elif filteredWords[1].lower() == 'months' and filteredWords[-1].lower() == 'ago':
             if filteredWords[0].isdigit():
-                resDate = currentDate.shift(months=-int(filteredWords[0])).date()
+                resDate = currentDate.shift(months=-int(filteredWords[0])).format('DD-MM-YYYY')
                 return resDate
             else:
-                resDate = currentDate.shift(months= -int(w2n.word_to_num(filteredWords[0].lower()))).date()
+                resDate = currentDate.shift(months= -int(w2n.word_to_num(filteredWords[0].lower()))).format('DD-MM-YYYY')
                 return resDate
         # *nums* years ago
         elif filteredWords[1].lower() == 'years' and filteredWords[-1].lower() == 'ago':
             if filteredWords[0].isdigit():
-                resDate = currentDate.shift(years=-int(filteredWords[0])).date()
+                resDate = currentDate.shift(years=-int(filteredWords[0])).format('DD-MM-YYYY')
                 return resDate
             else:
-                resDate = currentDate.shift(years = -int(w2n.word_to_num(filteredWords[0].lower()))).date()
+                resDate = currentDate.shift(years = -int(w2n.word_to_num(filteredWords[0].lower()))).format('DD-MM-YYYY')
                 return resDate
 
     else:
@@ -258,7 +267,7 @@ def extractionUsingArrowAndNltk(string: str):
 
 print(extractionUsingArrowAndNltk(testSentence))
 end = time.time()
-print(Fore.GREEN + Style.BRIGHT + "Time taken:",end - start)
+print(Fore.GREEN + Style.BRIGHT + "Time taken:",round(end - start, 2))
 
 
 # filteringUselessWords(texts[9])
