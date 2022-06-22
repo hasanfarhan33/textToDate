@@ -23,7 +23,7 @@ texts = ["I will see you tomorrow.", "Day after tomorrow", "On 3rd January.", "F
          "Yesterday was a good day", "See you next Monday", "12th November, 1963", "a decade ago", "I bought it last week",
          "I bought this in March"]
 
-testSentence = "tomorrow"
+testSentence = "I will buy this product coming Tuesday"
 
 dateString = "Today is:\n24-11-2020\n24/11/2020\n24/11/20\n11/24/2020\n24 Nov 2020" \
              "\n24 November 2020\nNov 24, 2020\nNovember 24, 2020\n5-11-2020\n5/11/2020\n5/11/20\n11/5/2020" \
@@ -67,6 +67,7 @@ def filteringUselessWords(string:str) -> str:
     stop_words.add('sister')
     stop_words.add('died')
     stop_words.add('met')
+    stop_words.add('buy')
     # _______________________________
 
     filteredList = [word for word in stringTokens if word.casefold() not in stop_words]
@@ -162,9 +163,11 @@ def extractionUsingArrowAndNltk(string: str):
                 resDate = currentDate.shift(weeks = 1, weekday = weekdays[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
         elif filteredWords[0].lower() == 'coming':
+            # Coming Monday
             if filteredWords[-1].lower() in weekdays:
                 resDate = currentDate.shift(weekday = weekdays[filteredWords[-1].lower()]).format('DD-MM-YYYY')
                 return resDate
+            # Coming 3rd
             elif filteredWords[-1].lower() in cardinalNums:
                 if currentDate.day < cardinalNums[filteredWords[-1].lower()]:
                     resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()]).format('DD-MM-YYYY')
@@ -173,6 +176,16 @@ def extractionUsingArrowAndNltk(string: str):
                     resDate = currentDate.replace(day = cardinalNums[filteredWords[-1].lower()])
                     resDate = resDate.shift(months = 1).format('DD-MM-YYYY')
                     return resDate
+            # Coming 3
+            elif filteredWords[-1].isdigit():
+                if currentDate.day < int(filteredWords[-1]):
+                    resDate = currentDate.replace(day = int(filteredWords[-1])).format('DD-MM-YYYY')
+                    return resDate
+                elif currentDate.day > int(filteredWords[-1]):
+                    resDate = currentDate.shift(months = 1)
+                    resDate = resDate.replace(day = int(filteredWords[-1])).format('DD-MM-YYYY')
+                    return resDate
+            # Coming tenth
             elif filteredWords[-1].lower() in daysTh:
                 if currentDate.day < daysTh[filteredWords[-1].lower()]:
                     resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()]).format('DD-MM-YYYY')
@@ -181,6 +194,7 @@ def extractionUsingArrowAndNltk(string: str):
                     resDate = currentDate.replace(day = daysTh[filteredWords[-1].lower()])
                     resDate = resDate.shift(months = 1).format('DD-MM-YYYY')
                     return resDate
+            # Coming December
             elif filteredWords[-1].lower() in months:
                 if currentDate.month < months[filteredWords[-1].lower()]:
                     resDate = currentDate.replace(day = 1, month = months[filteredWords[-1].lower()]).format('DD-MM-YYYY')
